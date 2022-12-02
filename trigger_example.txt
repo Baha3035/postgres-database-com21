@@ -1,0 +1,26 @@
+CREATE TABLE temperature (station_name varchar(50),
+						 max_temp integer,
+						 max_temp_group varchar(40));
+
+CREATE OR REPLACE FUNCTION classify_max_temp()
+RETURNS trigger AS
+$$
+BEGIN
+CASE
+	WHEN NEW.max_temp >=90 THEN NEW.max_temp_group := 'Hot';
+	WHEN NEW.max_temp BETWEEN 70 AND 89 THEN NEW.max_temp_group := 'Warm';
+	ELSE NEW.max_temp_group := 'OTHER';
+END CASE;
+RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER temperature_insert
+BEFORE INSERT
+ON temperature
+FOR EACH ROW
+EXECUTE PROCEDURE classify_max_temp();
+
+INSERT INTO temperature(station_name, max_temp) VALUES ('first station', 60);
+SELECT * FROM temperature;
